@@ -1,6 +1,8 @@
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+from tools import FUNCTION_NAME_TO_FUNCTION_MAP,TOOLS
+import json
 
 load_dotenv()
 
@@ -12,7 +14,7 @@ messages = []
 messages.append(
     {
         "role": "system",
-        "content": "You are a helpful assistant and always answer in a concise manner. If you don't know the answer, say 'I don't know'."
+        "content": "You are a helpful assistant and always answer in a concise manner. If you don't know the answer, say 'I don't know'. Only use tools when the user's question actually needs them; for greetings or general chat, reply normally."
     }
 )
 
@@ -29,12 +31,43 @@ while True:
 
     response = client.chat.completions.create(
         model=os.getenv("MODEL"),
-        messages=messages            
+        messages=messages,  
+        tools=TOOLS         
     )
+    msg=response.choices[0].message
+    if msg.tool_calls:
+        print("[tool called]:", [tc.function.name for tc in msg.tool_calls])
+        messages.append(
+            {
+                "role": "assistant",
+                "content": msg.content,
+                "tool_calls": [tc.model_dump() for tc in msg.tool_calls]
+            }
+        )
+        for tool_call in msg.tool_calls:
+            func_name = tool_call.function.name
+            func_args = json.loads(tool_call.function.arguments or "{}" )
+            fn = FUNCTION_NAME_TO_FUNCTION_MAP[func_name]
+            result = fn(**func_args)
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": str(result)
+                }
+            )
+        #2nd call to llm api
+        response=client.chat.completions.create(
+            model=os.getenv("MODEL"),
+            messages=messages,
+            tools=TOOLS
+        )
+        msg=response.choices[0].message
+
     messages.append(
         {
             "role": "assistant",
-            "content": response.choices[0].message.content
+            "content": msg.content
         }
     )
-    print("Assitant: " + response.choices[0].message.content)
+    print("Assistant: "+ (msg.content or ""))
