@@ -2,7 +2,8 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 from tools import FUNCTION_NAME_TO_FUNCTION_MAP, TOOLS
-import json
+import Utilities.utilities as log
+from tools import run_tool
 
 load_dotenv()
 
@@ -46,23 +47,15 @@ while True:
                 print("Assistant: " + (msg.content or ""))
                 break
 
+            log(f"  Step {_+1}: Model called tool '{msg.tool_calls[0].function.name}' with arguments: {msg.tool_calls[0].function.arguments}")
+            
             messages.append({
                 "role": "assistant",
                 "content": msg.content,
             })
 
             for tool_call in msg.tool_calls:
-                try:
-                    func_name = tool_call.function.name
-                    func_args = json.loads(
-                        tool_call.function.arguments or "{}"
-                    )
-                    fn = FUNCTION_NAME_TO_FUNCTION_MAP[func_name]
-                    result = fn(**func_args)
-
-                except Exception as e:
-                    result = f"Error: {str(e)}"
-
+                result=run_tool(tool_call)
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
