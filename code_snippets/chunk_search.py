@@ -2,6 +2,7 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 import numpy as np
+import json
 
 load_dotenv()
 
@@ -12,7 +13,7 @@ client = OpenAI(
 
 EMBED_MODEL = os.getenv("EMBED_MODEL")
 KB_FOLDER = os.getenv("KB_FOLDER")  
-
+VECTOR_STORE_FILE = os.getenv("VECTOR_STORE_FILE")
 
 # Generate embeddings for a given text
 def get_embeddings(text, model=EMBED_MODEL):
@@ -70,6 +71,7 @@ def search_documents(query, chunks, top_k=3):
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:top_k]
 
+# Chunk a document into smaller parts based on double newlines
 def chunk_document(document):
     chunks = []
     chunk_id=0;
@@ -83,12 +85,14 @@ def chunk_document(document):
             chunk_id += 1
     return chunks
 
+# Create chunks for all documents
 def create_chunks(documents):
     chunks=[]
     for doc in documents:
         chunks.extend(chunk_document(doc))
     return chunks
 
+# Test function to demonstrate the search functionality
 def test(user_query,chunks,top_k=3):
     print(f"\nUser Query: {user_query}\n")
 
@@ -98,8 +102,25 @@ def test(user_query,chunks,top_k=3):
         print(f"Score: {r['score']:.4f}, Source: {r['source']}, Size: {r['size']} characters")
         print(f"Text: {r['text']}\n")
 
-chunks= create_chunks(load_document(KB_FOLDER))
-chunks= add_embeddings(chunks)
+# Save and load vector store functions
+def save_vector_store(chunks, file_path=VECTOR_STORE_FILE):
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(chunks, f, indent=4)
+
+# Load vector store from a JSON file
+def load_vector_store(file_path=VECTOR_STORE_FILE):
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+if os.path.exists(VECTOR_STORE_FILE):
+    chunks = load_vector_store(VECTOR_STORE_FILE)
+    print(f"Loaded {len(chunks)} chunks from vector store.")
+
+else:
+    chunks= create_chunks(load_document(KB_FOLDER))
+    chunks= add_embeddings(chunks)
+    save_vector_store(chunks, VECTOR_STORE_FILE)
+    print(f"Created and saved {len(chunks)} chunks to vector store.")
 
 print("we have ",len(chunks)," chunks in the knowledge base")
 
