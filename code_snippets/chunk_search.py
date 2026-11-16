@@ -1,0 +1,108 @@
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+import numpy as np
+
+load_dotenv()
+
+client = OpenAI(
+    base_url=os.getenv("BASE_URL"),
+    api_key=os.getenv("API_KEY")
+)
+
+EMBED_MODEL = os.getenv("EMBED_MODEL")
+KB_FOLDER = os.getenv("KB_FOLDER")  
+
+
+# Generate embeddings for a given text
+def get_embeddings(text, model=EMBED_MODEL):
+    response = client.embeddings.create(
+        model=model,
+        input=text
+    )
+    return response.data[0].embedding
+
+# Calculate cosine similarity between two vectors
+def cosine_similarity(vec1, vec2):
+    dot_product = np.dot(vec1, vec2)
+    norm_vec1 = np.linalg.norm(vec1)
+    norm_vec2 = np.linalg.norm(vec2)
+    return dot_product / (norm_vec1 * norm_vec2)
+
+# Load documents from the knowledge base folder
+def load_document(folder=KB_FOLDER):
+    documents=[]
+
+    for filename in sorted(os.listdir(folder)):
+        if not filename.endswith(".txt"):
+            continue
+        path =os.path.join(folder, filename)
+        with open(path, "r", encoding="utf-8") as f:
+            documents.append(
+                {
+                    "source": filename,
+                    "text": f.read()
+                }
+            )
+    return documents
+
+# Add embeddings to each chunk in the list
+def add_embeddings(chunks):
+    for chunk in chunks:
+        chunk["vector"] = get_embeddings(chunk["text"])
+    return chunks
+
+# Search for top_k chunks based on cosine similarity to the query
+def search_documents(query, chunks, top_k=3):
+    query_vector = get_embeddings(query)
+    results = []
+
+    for chunk in chunks:
+        score = cosine_similarity(query_vector, chunk["vector"])
+        results.append({
+            "score": float(score),
+            "source": chunk["source"],
+            "chunk_id": chunk["chunk_id"],
+            "text": chunk["text"],
+            "size": len(chunk["text"])
+        })
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results[:top_k]
+
+def chunk_document(document):
+    chunks = []
+    chunk_id=0;
+    for part in document["text"].split("\n\n"):
+        if part.strip():
+            chunks.append({
+                "source": document["source"],
+                "chunk_id": len(chunks) + 1,
+                "text": part.strip()
+            })
+            chunk_id += 1
+    return chunks
+
+def create_chunks(documents):
+    chunks=[]
+    for doc in documents:
+        chunks.extend(chunk_document(doc))
+    return chunks
+
+def test(user_query,chunks,top_k=3):
+    print(f"\nUser Query: {user_query}\n")
+
+    results = search_documents(user_query, chunks, top_k)
+
+    for r in results:
+        print(f"Score: {r['score']:.4f}, Source: {r['source']}, Size: {r['size']} characters")
+        print(f"Text: {r['text']}\n")
+
+chunks= create_chunks(load_document(KB_FOLDER))
+chunks= add_embeddings(chunks)
+
+print("we have ",len(chunks)," chunks in the knowledge base")
+
+user_query = "What are the benefits of maternity leave?"
+
+test(user_query, chunks, top_k=3)

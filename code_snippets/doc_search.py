@@ -80,6 +80,7 @@ def test(user_query,documents,top_k=3):
 
 
 documents = load_document(KB_FOLDER)
+print(documents[0])
 documents = add_embeddings(documents)
 print("Documents loaded and embeddings added.")
 
