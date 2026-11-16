@@ -1,0 +1,9 @@
+All technical changes should be tracked in the approved version-control system. Developers should use descriptive branch names and commit messages that explain the purpose of each change.
+
+Code changes should follow the project’s style, architecture, and security guidelines. Secrets, credentials, and private keys must never be committed to source control.
+
+Before a change is merged, it should pass the required tests and review checks. Reviewers should examine correctness, maintainability, performance, and potential security risks.
+
+Deployments should follow the documented release process and use the approved environments. Changes with significant user impact should include a rollback or recovery plan.
+
+Technical incidents and important system decisions should be documented for future reference. The relevant owner should keep setup instructions, dependencies, and troubleshooting notes current.

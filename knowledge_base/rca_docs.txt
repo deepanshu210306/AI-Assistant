@@ -1,0 +1,9 @@
+A Root Cause Analysis (RCA) is used to understand why an incident or failure occurred. The objective is to identify contributing causes and prevent recurrence rather than assign blame.
+
+The incident owner should record the date, impact, affected systems or teams, and a clear description of the event. Relevant logs, reports, and supporting evidence should be preserved.
+
+The team reviews the sequence of events and identifies immediate triggers as well as underlying process or system weaknesses. Conclusions should be supported by evidence.
+
+Corrective actions address the current issue, while preventive actions reduce the chance of similar incidents. Each action should have an owner and a target completion date.
+
+The RCA is reviewed by the relevant stakeholders and stored in the approved knowledge repository. Action owners should provide updates until all agreed actions are closed.

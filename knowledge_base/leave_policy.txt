@@ -1,0 +1,9 @@
+Employees should submit planned leave requests through the approved leave management system. Requests should be made in advance so managers can plan team coverage.
+
+Leave approval depends on the available balance, team requirements, and the applicable leave category. Employees should wait for confirmation before treating planned leave as approved.
+
+For unexpected illness or emergencies, employees should inform their manager as soon as reasonably possible. Supporting documents may be requested where required by policy.
+
+Public holidays and weekly offs are handled according to the organization’s published holiday calendar. Any work scheduled on these days should be agreed with the manager in advance.
+
+Leave balances and request status can be checked in the leave management system. Questions about eligibility, corrections, or special cases should be directed to HR.
